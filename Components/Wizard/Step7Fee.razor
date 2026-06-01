@@ -2,7 +2,7 @@
 
 <div class="gov-note">
     Application Fee &amp; Inspection Fee: <strong>₹2,50,000/- + 18% GST = ₹@FeePayment.TotalFee.ToString("N0")</strong>.
-    Niche diye gaye method se fee jama karein.
+    Please pay the fee using one of the methods below.
 </div>
 
 <div class="field">
@@ -20,7 +20,7 @@
     @if (!F.Paid)
     {
         <button class="btn-gov" @onclick="PayNow">💳 Pay Now (Demo)</button>
-        <div class="hint" style="margin-top:6px;">Demo build — real gateway Phase 2 mein. Click karne par mock success ho jayega.</div>
+        <div class="hint" style="margin-top:6px;">Demo build — real gateway will be added in Phase 2. Clicking will simulate a successful payment.</div>
     }
     else
     {

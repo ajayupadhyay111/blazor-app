@@ -36,7 +36,7 @@
         var f = e.File;
         if (f.Size > DraftStore.MaxFileBytes)
         {
-            Error = $"File {FormatSize(f.Size)} hai — 2 MB se chhoti file chunein (localStorage limit).";
+            Error = $"File is {FormatSize(f.Size)} — please choose a file under 2 MB (localStorage limit).";
             return;
         }
         try
@@ -57,7 +57,7 @@
         }
         catch (Exception ex)
         {
-            Error = "File read nahi ho payi: " + ex.Message;
+            Error = "Could not read the file: " + ex.Message;
         }
     }
 

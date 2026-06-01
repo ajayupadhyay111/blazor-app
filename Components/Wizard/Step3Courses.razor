@@ -1,6 +1,6 @@
 @inject DraftStore Store
 
-<p class="hint">Ek ya zyada course add karein. Course Type chunne par uske courses dropdown mein aayenge.</p>
+<p class="hint">Add one or more courses. Selecting a Course Type will populate its courses in the dropdown.</p>
 
 @for (var idx = 0; idx < Courses.Count; idx++)
 {
@@ -40,7 +40,7 @@
                 </select>
                 @if (string.IsNullOrEmpty(row.CourseType))
                 {
-                    <div class="hint">Pehle Course Type chunein.</div>
+                    <div class="hint">Please select a Course Type first.</div>
                 }
             </div>
             @if (row.AppliedFor == "Seat Enhancement")

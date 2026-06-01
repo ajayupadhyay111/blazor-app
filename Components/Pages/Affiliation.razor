@@ -16,9 +16,9 @@ else if (Store.Current.Status == "submitted")
     <div class="gov-card">
         <div class="gov-card-head"><span class="num">✓</span> Application Submitted</div>
         <div class="gov-card-body success-box">
-            <p>Aapka affiliation application successfully submit ho gaya hai.</p>
+            <p>Your affiliation application has been submitted successfully.</p>
             <div class="code">@Store.Current.RegistrationCode</div>
-            <p class="hint">Yeh Registration Code apne paas surakshit rakhein.</p>
+            <p class="hint">Please keep this Registration Code safe for future reference.</p>
             <div style="margin-top:18px; display:flex; gap:10px; justify-content:center;">
                 <button class="btn-ghost no-print" @onclick="Print">🖶 Print / Download</button>
                 <button class="btn-gov no-print" @onclick="StartNew">New Application</button>
@@ -32,7 +32,7 @@ else
     @if (_showResume)
     {
         <div class="gov-note">
-            Aapki ek adhuri application mili (last saved @FormatSaved()).
+            An incomplete application was found (last saved @FormatSaved()).
             <button class="btn-gov btn-sm" @onclick="Resume">Resume</button>
             <button class="btn-ghost btn-sm" @onclick="StartNew">Start New</button>
         </div>
@@ -47,7 +47,7 @@ else
             @if (_errors.Count > 0)
             {
                 <div class="gov-errbox">
-                    Kripya neeche di gayi galtiyan theek karein:
+                    Please correct the following errors:
                     <ul>@foreach (var e in _errors) { <li>@e</li> }</ul>
                 </div>
             }
@@ -64,7 +64,7 @@ else
                 case 8: <ReviewSummary />
                         <div class="field" style="margin-top:16px;">
                             <label><input type="checkbox" @bind="Store.Current.Declaration.Accepted" @bind:after="Touch" />
-                                Main ghoshna karta hoon ki upar di gayi saari jaankari sahi hai.</label>
+                                I hereby declare that all the information provided above is true and correct.</label>
                         </div>
                         <div class="row2">
                             <div class="field"><label>Place <span class="req">*</span></label>
@@ -127,8 +127,8 @@ else
 
     private async Task Touch()
     {
-        // Agar errors dikh rahe hain to user ke fix karte hi live update karo
-        // (Next dobara dabane ki zaroorat nahi). Review step (8) ke errors Submit pe hi bante hain.
+        // If errors are shown, refresh them live as the user fixes fields
+        // (no need to click Next again). Step 8 (Review) errors are produced only on Submit.
         if (_errors.Count > 0 && _step < TotalSteps) _errors = Validate(_step);
         await InvokeAsync(StateHasChanged);
     }
@@ -181,9 +181,9 @@ else
     {
         _errors = new();
         for (var s = 1; s <= TotalSteps; s++) _errors.AddRange(Validate(s));
-        if (!Store.Current.Declaration.Accepted) _errors.Add("Declaration accept karein.");
-        if (string.IsNullOrWhiteSpace(Store.Current.Declaration.Place)) _errors.Add("Place daalein.");
-        if (string.IsNullOrWhiteSpace(Store.Current.Declaration.SignatoryName)) _errors.Add("Signatory name daalein.");
+        if (!Store.Current.Declaration.Accepted) _errors.Add("Please accept the declaration.");
+        if (string.IsNullOrWhiteSpace(Store.Current.Declaration.Place)) _errors.Add("Please enter the Place.");
+        if (string.IsNullOrWhiteSpace(Store.Current.Declaration.SignatoryName)) _errors.Add("Please enter the Signatory name.");
         if (_errors.Count > 0) { await Touch(); return; }
         await Store.SubmitAsync();
         await Touch();
@@ -203,43 +203,43 @@ else
         {
             case 2:
                 var a = c.Applicant;
-                if (string.IsNullOrWhiteSpace(a.SocietyName)) e.Add("Society/Trust/Company ka naam zaroori hai.");
-                if (string.IsNullOrWhiteSpace(a.InstituteName)) e.Add("Proposed Institute Name zaroori hai.");
-                if (string.IsNullOrWhiteSpace(a.Address)) e.Add("Address zaroori hai.");
-                if (string.IsNullOrWhiteSpace(a.District)) e.Add("District chunein.");
-                if (!System.Text.RegularExpressions.Regex.IsMatch(a.PinCode ?? "", @"^\d{6}$")) e.Add("Pin Code 6 digit ka hona chahiye.");
-                if (string.IsNullOrWhiteSpace(a.ContactPerson)) e.Add("Contact Person Name zaroori hai.");
-                if (!System.Text.RegularExpressions.Regex.IsMatch(a.Mobile ?? "", @"^[6-9]\d{9}$")) e.Add("Mobile 10 digit ka valid number daalein.");
-                if (!System.Text.RegularExpressions.Regex.IsMatch(a.Email ?? "", @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) e.Add("Valid Email daalein.");
+                if (string.IsNullOrWhiteSpace(a.SocietyName)) e.Add("Name of Society/Trust/Company is required.");
+                if (string.IsNullOrWhiteSpace(a.InstituteName)) e.Add("Proposed Institute Name is required.");
+                if (string.IsNullOrWhiteSpace(a.Address)) e.Add("Address is required.");
+                if (string.IsNullOrWhiteSpace(a.District)) e.Add("Please select a District.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(a.PinCode ?? "", @"^\d{6}$")) e.Add("Pin Code must be 6 digits.");
+                if (string.IsNullOrWhiteSpace(a.ContactPerson)) e.Add("Contact Person Name is required.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(a.Mobile ?? "", @"^[6-9]\d{9}$")) e.Add("Please enter a valid 10-digit Mobile number.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(a.Email ?? "", @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) e.Add("Please enter a valid Email address.");
                 break;
             case 3:
-                if (c.Courses.Count == 0) e.Add("Kam se kam ek course add karein.");
+                if (c.Courses.Count == 0) e.Add("Please add at least one course.");
                 for (var i = 0; i < c.Courses.Count; i++)
                 {
                     var r = c.Courses[i];
-                    if (string.IsNullOrWhiteSpace(r.CourseType)) e.Add($"Course {i + 1}: Course Type chunein.");
-                    if (string.IsNullOrWhiteSpace(r.Course)) e.Add($"Course {i + 1}: Course chunein.");
-                    if (r.AppliedSeats is null or <= 0) e.Add($"Course {i + 1}: Applied seats daalein.");
-                    if (r.AppliedFor == "Seat Enhancement" && (r.ExistingSeats is null or < 0)) e.Add($"Course {i + 1}: Existing seats daalein.");
+                    if (string.IsNullOrWhiteSpace(r.CourseType)) e.Add($"Course {i + 1}: Please select a Course Type.");
+                    if (string.IsNullOrWhiteSpace(r.Course)) e.Add($"Course {i + 1}: Please select a Course.");
+                    if (r.AppliedSeats is null or <= 0) e.Add($"Course {i + 1}: Please enter Applied seats.");
+                    if (r.AppliedFor == "Seat Enhancement" && (r.ExistingSeats is null or < 0)) e.Add($"Course {i + 1}: Please enter Existing seats.");
                 }
                 break;
             case 4:
                 var p = c.PartI;
-                if (p.SeatsAppliedFor is null or <= 0) e.Add("No. of Seats Applied for daalein.");
-                if (string.IsNullOrWhiteSpace(p.RegistrationNumber)) e.Add("Institution Registration Number zaroori hai.");
-                if (p.RegistrationDate is null) e.Add("Registration Date zaroori hai.");
-                if (string.IsNullOrWhiteSpace(p.InstitutionAddress)) e.Add("Institution Address zaroori hai.");
+                if (p.SeatsAppliedFor is null or <= 0) e.Add("Please enter No. of Seats Applied for.");
+                if (string.IsNullOrWhiteSpace(p.RegistrationNumber)) e.Add("Institution Registration Number is required.");
+                if (p.RegistrationDate is null) e.Add("Registration Date is required.");
+                if (string.IsNullOrWhiteSpace(p.InstitutionAddress)) e.Add("Institution Address is required.");
                 break;
             case 5:
-                if (string.IsNullOrWhiteSpace(c.PartII.ChiefOfficerName)) e.Add("Chief/Nodal Officer ka naam zaroori hai.");
+                if (string.IsNullOrWhiteSpace(c.PartII.ChiefOfficerName)) e.Add("Chief/Nodal Officer name is required.");
                 break;
             case 6:
-                if (c.Attachments.TeachingBlockPhoto is null) e.Add("Attachment-1 (Teaching Block Photograph) zaroori hai.");
-                if (c.Attachments.StaffDetails is null) e.Add("Attachment-4 (Staff Details) zaroori hai.");
-                if (c.Attachments.Affidavit is null) e.Add("Attachment-5 (Affidavit) zaroori hai.");
+                if (c.Attachments.TeachingBlockPhoto is null) e.Add("Attachment-1 (Teaching Block Photograph) is required.");
+                if (c.Attachments.StaffDetails is null) e.Add("Attachment-4 (Staff Details) is required.");
+                if (c.Attachments.Affidavit is null) e.Add("Attachment-5 (Affidavit) is required.");
                 break;
             case 7:
-                if (!c.Fee.Paid && string.IsNullOrWhiteSpace(c.Fee.TransactionNo)) e.Add("Payment karein ya Transaction No. daalein.");
+                if (!c.Fee.Paid && string.IsNullOrWhiteSpace(c.Fee.TransactionNo)) e.Add("Please complete payment or enter a Transaction No.");
                 break;
         }
         return e;
