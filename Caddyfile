@@ -1,0 +1,16 @@
+# Caddy config that runs INSIDE the container to serve the WASM static files.
+# The host Caddy reverse-proxies your domain to this container's port 8080.
+:8080 {
+	root * /srv
+	encode gzip zstd
+
+	# SPA fallback: client-side routes like /affiliation must serve index.html
+	try_files {path} /index.html
+
+	file_server
+
+	# Long cache for hashed framework assets; never cache index.html
+	@immutable path /_framework/* /lib/* *.css *.png *.woff2
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+}

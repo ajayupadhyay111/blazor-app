@@ -1,55 +1,58 @@
 # Deployment Guide — UPSMFAC Affiliation Portal
 
-App type: **.NET 10 Blazor Web App (Interactive Server)**. Yeh ek server-rendered interactive
-app hai, isliye ek **server host** chahiye (Docker-based). localStorage client pe chalta hai;
-form data browser mein save hota hai.
+App type: **.NET 10 Blazor WebAssembly (Standalone)** — poori app browser mein chalti hai,
+**koi server/WebSocket nahi**. Bas static files serve karne hain. Deployment aapke hi
+**Docker + Caddy** workflow se hota hai (image banao → container run karo → host Caddy mein add karo).
 
-> ⚠️ **Note:** Pehle "WASM + Netlify (pure static)" plan tha. Lekin client ne ab
-> **session tracking / concurrent users / secure retention** maanga — yeh server-side concepts
-> hain. Isliye app abhi **Interactive Server** par hai (Docker se subdomain pe deploy hota hai,
-> aur Phase-2 backend/DB plug karne ke liye ready hai). Detail: see IMPLEMENTATION_PLAN.md §architecture.
+> ✅ Pehle Interactive Server tha (WebSocket disconnect aata tha). Ab WASM hai — woh issue khatam.
+> Container ke andar ek chhota Caddy static files deta hai; aapka host Caddy us container ko reverse-proxy karta hai.
 
 ---
 
-## Local run
+## Local run (development)
 ```powershell
 dotnet run --project BlazorApp.csproj
 # → http://localhost:5271/affiliation
 ```
 
-## Option A — Render.com (free tier, easiest subdomain)
-1. Code ko GitHub repo mein push karein.
-2. https://render.com → **New → Web Service** → repo connect.
-3. Render `Dockerfile` auto-detect karega → **Create Web Service**.
-4. Deploy hone par free URL milega: `https://<name>.onrender.com/affiliation` — yahi externally verifiable subdomain hai.
-
-## Option B — Railway.app
-1. `railway init` → `railway up` (Dockerfile auto-detected), ya GitHub repo connect.
-2. **Settings → Networking → Generate Domain** → `https://<name>.up.railway.app`.
-
-## Option C — Azure App Service (Linux, container)
+## Docker build & run  ← aapka workflow
 ```bash
-az group create -n upsmfac-rg -l centralindia
-az appservice plan create -g upsmfac-rg -n upsmfac-plan --is-linux --sku B1
-az webapp create -g upsmfac-rg -p upsmfac-plan -n upsmfac-affiliation --deployment-container-image-name <your-registry>/blazorapp:latest
-# → https://upsmfac-affiliation.azurewebsites.net/affiliation
+# 1) image banao (multi-stage: SDK publish → caddy serve)
+docker build -t upsmfac-affiliation .
+
+# 2) container run karo (host ke 8080 ko container ke 8080 se map)
+docker run -d --restart unless-stopped -p 8080:8080 --name upsmfac upsmfac-affiliation
+
+# test: http://SERVER-IP:8080/affiliation
 ```
 
-## Build & test the container locally
-```powershell
-docker build -t upsmfac-affiliation .
-docker run -p 8080:8080 upsmfac-affiliation
-# → http://localhost:8080/affiliation
+## Host Caddy mein add karo
+Apne host ke `/etc/caddy/Caddyfile` mein:
 ```
+form.ajayupadhyay.online {
+	reverse_proxy localhost:8080
+}
+```
+Phir:
+```bash
+sudo systemctl reload caddy
+```
+✅ Live: **https://form.ajayupadhyay.online/affiliation** — host Caddy SSL khud handle karega.
+SPA routing (/affiliation jaise deep links) container ke andar wale Caddyfile ke `try_files` se handle hota hai.
 
 ---
 
-### Custom sub-domain (e.g. affiliation.yourdomain.gov.in)
-Render/Railway/Azure sab custom domain support karte hain:
-1. Host ke dashboard mein **Custom Domain** add karein.
-2. Apne DNS provider pe ek **CNAME** record banayein jo host ke diye target ko point kare.
-3. SSL automatically provision ho jaata hai.
+## Future updates (naya code deploy)
+```bash
+docker build -t upsmfac-affiliation .
+docker stop upsmfac && docker rm upsmfac
+docker run -d --restart unless-stopped -p 8080:8080 --name upsmfac upsmfac-affiliation
+```
+(Host Caddy ko chhune ki zaroorat nahi — same port pe naya container.)
 
-> ❗ Main aapke account/DNS pe live deploy **khud nahi** kar sakta (credentials chahiye).
-> Upar diye steps follow karke 5–10 min mein live subdomain mil jayega; ya credentials
-> dene par main guide kar dunga.
+---
+
+## Files
+- `Dockerfile` — 2-stage: .NET SDK se WASM publish → `caddy:2-alpine` se serve.
+- `Caddyfile` — container ke andar ka config (port 8080, SPA fallback, gzip, asset caching).
+- `.dockerignore` — bin/obj/.git ko image se bahar rakhta hai.

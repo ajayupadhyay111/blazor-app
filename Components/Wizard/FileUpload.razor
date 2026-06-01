@@ -6,7 +6,11 @@
 <div class="field @(string.IsNullOrEmpty(Error) ? "" : "invalid")">
     <label>@Label @if (Required) { <span class="req">*</span> } <span class="hint">(@Accept, max 2 MB)</span></label>
 
-    @if (Value is null)
+    @if (_busy)
+    {
+        <div class="upload-busy"><span class="inline-spin dark"></span> Reading file, please wait…</div>
+    }
+    else if (Value is null)
     {
         <InputFile OnChange="OnChange" accept="@Accept" />
     }
@@ -29,6 +33,7 @@
     [Parameter] public EventCallback<UploadedFile?> ValueChanged { get; set; }
 
     private string? Error;
+    private bool _busy;
 
     private async Task OnChange(InputFileChangeEventArgs e)
     {
@@ -39,6 +44,8 @@
             Error = $"File is {FormatSize(f.Size)} — please choose a file under 2 MB (localStorage limit).";
             return;
         }
+        _busy = true;
+        StateHasChanged();
         try
         {
             using var ms = new MemoryStream();
@@ -58,6 +65,10 @@
         catch (Exception ex)
         {
             Error = "Could not read the file: " + ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

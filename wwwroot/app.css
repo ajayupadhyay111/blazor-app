@@ -176,6 +176,32 @@ a { color: var(--gov-blue); }
 .success-box { text-align: center; padding: 30px; }
 .success-box .code { font-size: 26px; font-weight: 700; color: var(--gov-navy); letter-spacing: 1px; margin: 10px 0; }
 
+/* ---------- Loading indicators ---------- */
+@keyframes gov-spin { to { transform: rotate(360deg); } }
+.spinner {
+    width: 42px; height: 42px; border: 4px solid var(--gov-blue-light);
+    border-top-color: var(--gov-navy); border-radius: 50%; animation: gov-spin .8s linear infinite;
+}
+.loading-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: 48px 20px; color: var(--gov-muted); font-size: 14px;
+}
+.inline-spin {
+    width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.45);
+    border-top-color: #fff; border-radius: 50%; display: inline-block;
+    animation: gov-spin .7s linear infinite; vertical-align: -2px; margin-right: 7px;
+}
+.inline-spin.dark { border-color: var(--gov-blue-light); border-top-color: var(--gov-navy); }
+button:disabled .inline-spin { opacity: 1; }
+.upload-busy { display: inline-flex; align-items: center; gap: 8px; color: var(--gov-navy); font-size: 13px; padding: 6px 0; }
+
+/* WASM boot loader (used in index.html before the app starts) */
+#app .boot-loader {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; gap: 16px; font-family: "Segoe UI", sans-serif; color: #0b2e59;
+}
+#app .boot-loader .spinner { width: 48px; height: 48px; }
+
 @media print {
     .gov-header, .gov-topstrip, .gov-stepper, .gov-nav, .no-print { display: none !important; }
     .gov-shell { margin: 0; max-width: 100%; }

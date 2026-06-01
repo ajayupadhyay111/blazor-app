@@ -8,7 +8,12 @@
 
 @if (!_ready)
 {
-    <div class="gov-card"><div class="gov-card-body">Loading…</div></div>
+    <div class="gov-card"><div class="gov-card-body">
+        <div class="loading-wrap">
+            <div class="spinner"></div>
+            <div>Loading your application…</div>
+        </div>
+    </div></div>
 }
 else if (Store.Current.Status == "submitted")
 {
@@ -93,7 +98,10 @@ else
             }
             else
             {
-                <button class="btn-gov" @onclick="Submit">✓ Final Submission</button>
+                <button class="btn-gov" @onclick="Submit" disabled="@_submitting">
+                    @if (_submitting) { <span class="inline-spin"></span><text>Submitting…</text> }
+                    else { <text>✓ Final Submission</text> }
+                </button>
             }
         </div>
     </div>
@@ -107,6 +115,7 @@ else
 
     private bool _ready;
     private bool _showResume;
+    private bool _submitting;
     private int _step = 1;
     private List<string> _errors = new();
 
@@ -184,7 +193,12 @@ else
         if (string.IsNullOrWhiteSpace(Store.Current.Declaration.Place)) _errors.Add("Please enter the Place.");
         if (string.IsNullOrWhiteSpace(Store.Current.Declaration.SignatoryName)) _errors.Add("Please enter the Signatory name.");
         if (_errors.Count > 0) { await Touch(); return; }
+
+        _submitting = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(400); // brief pause so the busy state is visible before the success screen
         await Store.SubmitAsync();
+        _submitting = false;
         await Touch();
     }
 
