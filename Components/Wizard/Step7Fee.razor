@@ -41,7 +41,7 @@ else
             <input type="date" @bind="F.PaymentDate" @bind:after="Save" />
         </div>
     </div>
-    <FileUpload Label="Payment Proof (optional)" Accept=".pdf,.jpg,.png"
+    <FileUpload Label="Payment Proof (optional)" Accept=".pdf,.jpg,.png" MaxBytes="300 * 1024"
                 Value="F.Proof" ValueChanged="@(v => { F.Proof = v; })" />
 }
 

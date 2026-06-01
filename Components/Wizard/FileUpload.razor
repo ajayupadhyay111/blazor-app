@@ -4,15 +4,17 @@
 @inject DraftStore Store
 
 <div class="field @(string.IsNullOrEmpty(Error) ? "" : "invalid")">
-    <label>@Label @if (Required) { <span class="req">*</span> } <span class="hint">(@Accept, max 2 MB)</span></label>
+    <label>@Label @if (Required) { <span class="req">*</span> } <span class="hint">(@Accept, max @FormatSize(MaxBytes))</span></label>
 
-    @if (_busy)
+    @if (Value is null)
     {
-        <div class="upload-busy"><span class="inline-spin dark"></span> Reading file, please wait…</div>
-    }
-    else if (Value is null)
-    {
-        <InputFile OnChange="OnChange" accept="@Accept" />
+        @* Keep the InputFile mounted while reading — removing it mid-read invalidates
+           Blazor's internal file registry (_blazorFilesById) and breaks OpenReadStream. *@
+        <InputFile OnChange="OnChange" accept="@Accept" disabled="@_busy" />
+        @if (_busy)
+        {
+            <div class="upload-busy"><span class="inline-spin dark"></span> Reading file, please wait…</div>
+        }
     }
     else
     {
@@ -29,6 +31,7 @@
     [Parameter] public string Label { get; set; } = "";
     [Parameter] public string Accept { get; set; } = ".pdf,.zip";
     [Parameter] public bool Required { get; set; }
+    [Parameter] public long MaxBytes { get; set; } = 1024 * 1024; // per-field cap; overridden per attachment
     [Parameter] public UploadedFile? Value { get; set; }
     [Parameter] public EventCallback<UploadedFile?> ValueChanged { get; set; }
 
@@ -39,9 +42,9 @@
     {
         Error = null;
         var f = e.File;
-        if (f.Size > DraftStore.MaxFileBytes)
+        if (f.Size > MaxBytes)
         {
-            Error = $"File is {FormatSize(f.Size)} — please choose a file under 2 MB (localStorage limit).";
+            Error = $"File is {FormatSize(f.Size)} — please choose a file under {FormatSize(MaxBytes)}.";
             return;
         }
         _busy = true;
@@ -49,7 +52,7 @@
         try
         {
             using var ms = new MemoryStream();
-            await f.OpenReadStream(DraftStore.MaxFileBytes).CopyToAsync(ms);
+            await f.OpenReadStream(MaxBytes).CopyToAsync(ms);
             var bytes = ms.ToArray();
             var ct = string.IsNullOrWhiteSpace(f.ContentType) ? "application/octet-stream" : f.ContentType;
             var file = new UploadedFile
