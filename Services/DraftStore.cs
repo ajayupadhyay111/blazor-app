@@ -69,13 +69,45 @@ public class DraftStore
         LastSaved = null;
     }
 
-    /// <summary>Finalise the application: assign a registration code and mark submitted.</summary>
+    /// <summary>Finalise the application: assign a registration code, mark submitted,
+    /// and append it to the submitted list so a returning applicant can look it up.</summary>
     public async Task<string> SubmitAsync()
     {
         Current.Status = "submitted";
         Current.SubmittedUtc = DateTime.UtcNow.ToString("o");
         Current.RegistrationCode = $"UP-AFF-{DateTime.Now.Year}-{Random.Shared.Next(1, 9999):0000}";
         await SaveAsync();
+
+        var submitted = await GetSubmittedAsync();
+        submitted.Add(Current);
+        await _js.InvokeVoidAsync("appStorage.save", SubmittedKey, JsonSerializer.Serialize(submitted));
+
         return Current.RegistrationCode;
+    }
+
+    /// <summary>All applications submitted on this browser/device.</summary>
+    public async Task<List<AffiliationApplication>> GetSubmittedAsync()
+    {
+        var json = await _js.InvokeAsync<string?>("appStorage.load", SubmittedKey);
+        if (string.IsNullOrWhiteSpace(json)) return new();
+        try { return JsonSerializer.Deserialize<List<AffiliationApplication>>(json, JsonOpts) ?? new(); }
+        catch { return new(); }
+    }
+
+    /// <summary>
+    /// Look up a previously submitted application by Registration Code + Registered Mobile.
+    /// On success, loads it into <see cref="Current"/> (read-only submitted view) and returns true.
+    /// Note: with no backend, this only finds applications submitted on THIS browser/device.
+    /// </summary>
+    public async Task<bool> LoadSubmittedAsync(string? code, string? mobile)
+    {
+        var c = code?.Trim();
+        var m = mobile?.Trim();
+        var found = (await GetSubmittedAsync()).FirstOrDefault(a =>
+            string.Equals(a.RegistrationCode, c, StringComparison.OrdinalIgnoreCase) &&
+            a.Applicant.Mobile == m);
+        if (found is null) return false;
+        Current = found;
+        return true;
     }
 }

@@ -20,19 +20,77 @@
 
 @if (Store.Current.Registration.IsRegistered == "1")
 {
-    <div class="gov-note">
-        Existing-applicant login will arrive with the backend (Phase 2). For now, select <strong>No</strong>
-        to fill a fresh application.
+    <div class="gov-card" style="margin-top:6px;">
+        <div class="gov-card-head"><span class="num">★</span> View Your Submitted Application</div>
+        <div class="gov-card-body">
+            <p class="hint">Enter the Registration Code and Registered Mobile No. you received at submission.</p>
+            <div class="row2">
+                <div class="field">
+                    <label>Registration Code <span class="req">*</span></label>
+                    <input type="text" placeholder="e.g. UP-AFF-2026-0001" @bind="_code" />
+                </div>
+                <div class="field">
+                    <label>Registered Mobile No. <span class="req">*</span></label>
+                    <input type="text" maxlength="10" placeholder="10-digit mobile" @bind="_mobile" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_lookupError))
+            {
+                <div class="gov-errbox">@_lookupError</div>
+            }
+
+            <button class="btn-gov" @onclick="Lookup" disabled="@_searching">
+                @if (_searching) { <span class="inline-spin"></span><text>Searching…</text> }
+                else { <text>View My Application</text> }
+            </button>
+
+            <div class="gov-note" style="margin-top:14px;">
+                Note: Without a central server, this lookup finds applications submitted on
+                <strong>this browser/device</strong>. (Cross-device lookup needs the backend — Phase 2.)
+            </div>
+        </div>
     </div>
 }
 
 @code {
     [Parameter] public EventCallback OnChanged { get; set; }
 
+    private string _code = "";
+    private string _mobile = "";
+    private string? _lookupError;
+    private bool _searching;
+
     private async Task Set(string v)
     {
         Store.Current.Registration.IsRegistered = v;
+        _lookupError = null;
         await Store.SaveAsync();
         await OnChanged.InvokeAsync();
+    }
+
+    private async Task Lookup()
+    {
+        _lookupError = null;
+        if (string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_mobile))
+        {
+            _lookupError = "Please enter both Registration Code and Registered Mobile No.";
+            return;
+        }
+        _searching = true;
+        StateHasChanged();
+
+        var found = await Store.LoadSubmittedAsync(_code, _mobile);
+        _searching = false;
+
+        if (found)
+        {
+            // Status is "submitted" now → the host renders the read-only application view.
+            await OnChanged.InvokeAsync();
+        }
+        else
+        {
+            _lookupError = "No submitted application found with this Registration Code and Mobile No. on this device.";
+        }
     }
 }
