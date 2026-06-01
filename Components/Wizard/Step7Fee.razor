@@ -1,0 +1,72 @@
+@inject DraftStore Store
+
+<div class="gov-note">
+    Application Fee &amp; Inspection Fee: <strong>₹2,50,000/- + 18% GST = ₹@FeePayment.TotalFee.ToString("N0")</strong>.
+    Niche diye gaye method se fee jama karein.
+</div>
+
+<div class="field">
+    <label>Payment Mode <span class="req">*</span></label>
+    <div class="radioset">
+        <label><input type="radio" name="mode" value="Online"
+               checked="@(F.Mode == "Online")" @onchange="@(() => SetMode("Online"))" /> Online (Payment Gateway)</label>
+        <label><input type="radio" name="mode" value="NEFT-RTGS"
+               checked="@(F.Mode == "NEFT-RTGS")" @onchange="@(() => SetMode("NEFT-RTGS"))" /> NEFT / RTGS</label>
+    </div>
+</div>
+
+@if (F.Mode == "Online")
+{
+    @if (!F.Paid)
+    {
+        <button class="btn-gov" @onclick="PayNow">💳 Pay Now (Demo)</button>
+        <div class="hint" style="margin-top:6px;">Demo build — real gateway Phase 2 mein. Click karne par mock success ho jayega.</div>
+    }
+    else
+    {
+        <div class="gov-note" style="background:#eaf6ef;border-color:#bfe3cd;border-left-color:var(--gov-green);">
+            ✓ Payment successful. Transaction No: <strong>@F.TransactionNo</strong> (@F.PaymentDate)
+        </div>
+    }
+}
+else
+{
+    <div class="row3">
+        <div class="field">
+            <label>UTR / Transaction No. <span class="req">*</span></label>
+            <input type="text" @bind="F.TransactionNo" @bind:after="Save" />
+        </div>
+        <div class="field">
+            <label>Payment Date <span class="req">*</span></label>
+            <input type="date" @bind="F.PaymentDate" @bind:after="Save" />
+        </div>
+    </div>
+    <FileUpload Label="Payment Proof (optional)" Accept=".pdf,.jpg,.png"
+                Value="F.Proof" ValueChanged="@(v => { F.Proof = v; })" />
+}
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private FeePayment F => Store.Current.Fee;
+
+    private async Task SetMode(string m)
+    {
+        F.Mode = m;
+        if (m == "NEFT-RTGS") F.Paid = false;
+        await Save();
+    }
+
+    private async Task PayNow()
+    {
+        F.Paid = true;
+        F.TransactionNo = $"TXN{DateTime.Now:yyyyMMddHHmmss}";
+        F.PaymentDate = DateOnly.FromDateTime(DateTime.Now);
+        await Save();
+    }
+
+    private async Task Save()
+    {
+        await Store.SaveAsync();
+        await OnChanged.InvokeAsync();
+    }
+}

@@ -1,0 +1,27 @@
+@* Horizontal step indicator. Click a completed/current step to jump to it. *@
+
+<div class="gov-stepper">
+    @for (var i = 0; i < Titles.Length; i++)
+    {
+        var step = i + 1;
+        var cls = step == Current ? "active"
+                : step < Current ? "done"
+                : "locked";
+        var canJump = step <= Current;
+        <div class="gov-step @cls" @onclick="() => Jump(step, canJump)">
+            <span class="dot">@(step < Current ? "✓" : step)</span>
+            @Titles[i]
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string[] Titles { get; set; } = Array.Empty<string>();
+    [Parameter] public int Current { get; set; }
+    [Parameter] public EventCallback<int> OnJump { get; set; }
+
+    private async Task Jump(int step, bool can)
+    {
+        if (can && step != Current) await OnJump.InvokeAsync(step);
+    }
+}

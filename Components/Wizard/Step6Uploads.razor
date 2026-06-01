@@ -1,0 +1,29 @@
+@inject DraftStore Store
+
+<p class="hint">Related photographs &amp; documents upload karein. Photos zip mein (Front, Back &amp; Side View), Affidavit pdf mein.</p>
+
+<FileUpload Label="Attachment-1: Teaching Block Photograph (Front, Back & Side View)" Accept=".zip" Required="true"
+            Value="At.TeachingBlockPhoto" ValueChanged="@(v => Set(f => At.TeachingBlockPhoto = f, v))" />
+
+<FileUpload Label="Attachment-2: Hostel Block Photograph (Front, Back & Side View)" Accept=".zip"
+            Value="At.HostelBlockPhoto" ValueChanged="@(v => Set(f => At.HostelBlockPhoto = f, v))" />
+
+<FileUpload Label="Attachment-3: Hospital Photograph (Front, Back & Side View)" Accept=".zip"
+            Value="At.HospitalPhoto" ValueChanged="@(v => Set(f => At.HospitalPhoto = f, v))" />
+
+<FileUpload Label="Attachment-4: Hospital Staff Details (Doctors / Nurses / Allied Healthcare)" Accept=".zip" Required="true"
+            Value="At.StaffDetails" ValueChanged="@(v => Set(f => At.StaffDetails = f, v))" />
+
+<FileUpload Label="Attachment-5: Affidavit on stamp paper attested by a Notary" Accept=".pdf" Required="true"
+            Value="At.Affidavit" ValueChanged="@(v => Set(f => At.Affidavit = f, v))" />
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private Attachments At => Store.Current.Attachments;
+
+    private async Task Set(Action<UploadedFile?> assign, UploadedFile? value)
+    {
+        assign(value);
+        await OnChanged.InvokeAsync(); // FileUpload already persisted to localStorage
+    }
+}

@@ -1,0 +1,38 @@
+@inject DraftStore Store
+
+<div class="gov-note">
+    <strong>Are you Registered on this portal (For Fresh Applicants)?</strong><br />
+    Agar aapne pehle hi On-Line process se Application Form submit kiya hai aur aapke paas valid
+    Registration Code + Registered Mobile No. hai to <em>Yes</em> chunein, warna <em>No</em>.
+    Pratyek Course/Seat Enhancement ke liye ek nayi On-Line Application Form bharni hoti hai.
+</div>
+
+<div class="field">
+    <div class="radioset">
+        <label><input type="radio" name="isreg" value="0"
+               checked="@(Store.Current.Registration.IsRegistered == "0")"
+               @onchange="@(() => Set("0"))" /> No (Fresh Applicant)</label>
+        <label><input type="radio" name="isreg" value="1"
+               checked="@(Store.Current.Registration.IsRegistered == "1")"
+               @onchange="@(() => Set("1"))" /> Yes (Already Registered)</label>
+    </div>
+</div>
+
+@if (Store.Current.Registration.IsRegistered == "1")
+{
+    <div class="gov-note">
+        Demo build mein existing-applicant login backend (Phase 2) ke saath aayega. Abhi <strong>No</strong>
+        chunkar fresh application bhar sakte hain.
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task Set(string v)
+    {
+        Store.Current.Registration.IsRegistered = v;
+        await Store.SaveAsync();
+        await OnChanged.InvokeAsync();
+    }
+}

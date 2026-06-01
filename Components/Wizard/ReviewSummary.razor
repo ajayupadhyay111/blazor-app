@@ -1,0 +1,78 @@
+@inject DraftStore Store
+@* Read-only consolidated view of the whole application. Used on the Review step
+   and on the post-submission success screen (and is print-friendly). *@
+
+<div class="gov-card">
+    <div class="gov-card-head">Applicant Details</div>
+    <div class="gov-card-body">
+        <div class="summary-grid">
+            <div class="k">Applicant Type</div><div>@A.ApplicantType</div>
+            <div class="k">Society/Trust/Company</div><div>@A.SocietyName</div>
+            <div class="k">Proposed Institute</div><div>@A.InstituteName</div>
+            <div class="k">Address</div><div>@A.Address</div>
+            <div class="k">District / Pin</div><div>@A.District — @A.PinCode</div>
+            <div class="k">Contact Person</div><div>@A.ContactPerson</div>
+            <div class="k">Phone / Mobile</div><div>@A.Phone / @A.Mobile</div>
+            <div class="k">Email</div><div>@A.Email</div>
+            <div class="k">Forwarding Officer</div><div>@Dash(A.ForwardingOfficer)</div>
+        </div>
+    </div>
+</div>
+
+<div class="gov-card">
+    <div class="gov-card-head">Courses</div>
+    <div class="gov-card-body">
+        <table class="gov-table">
+            <thead><tr><th>Applied for</th><th>Council</th><th>Type</th><th>Course</th><th>Existing</th><th>Applied</th></tr></thead>
+            <tbody>
+                @foreach (var c in Store.Current.Courses)
+                {
+                    <tr>
+                        <td>@c.AppliedFor</td><td>@c.Council</td><td>@c.CourseType</td><td>@c.Course</td>
+                        <td>@(c.ExistingSeats?.ToString() ?? "—")</td><td>@(c.AppliedSeats?.ToString() ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="gov-card">
+    <div class="gov-card-head">Form Details</div>
+    <div class="gov-card-body">
+        <div class="summary-grid">
+            <div class="k">Seats Applied for</div><div>@P1.SeatsAppliedFor</div>
+            <div class="k">Institution Type</div><div>@P1.InstitutionType</div>
+            <div class="k">Registration No / Date</div><div>@P1.RegistrationNumber — @P1.RegistrationDate</div>
+            <div class="k">Institution Address</div><div>@P1.InstitutionAddress</div>
+            <div class="k">Chief / Nodal Officer</div><div>@P2.ChiefOfficerName @(string.IsNullOrEmpty(P2.ChiefOfficerDesignation) ? "" : $"({P2.ChiefOfficerDesignation})")</div>
+            <div class="k">Affiliated University</div><div>@Dash(P2.AffiliatedUniversity)</div>
+            <div class="k">Hospital / PMJAY</div><div>@Dash(P2.HospitalName) — PMJAY: @P2.PmjayEmpanelled</div>
+        </div>
+    </div>
+</div>
+
+<div class="gov-card">
+    <div class="gov-card-head">Uploads &amp; Fee</div>
+    <div class="gov-card-body">
+        <div class="summary-grid">
+            <div class="k">Teaching Block Photo</div><div>@FileName(At.TeachingBlockPhoto)</div>
+            <div class="k">Hostel Block Photo</div><div>@FileName(At.HostelBlockPhoto)</div>
+            <div class="k">Hospital Photo</div><div>@FileName(At.HospitalPhoto)</div>
+            <div class="k">Staff Details</div><div>@FileName(At.StaffDetails)</div>
+            <div class="k">Affidavit</div><div>@FileName(At.Affidavit)</div>
+            <div class="k">Fee</div><div>₹@FeePayment.TotalFee.ToString("N0") — @F.Mode @(F.Paid ? "(Paid)" : "") @(string.IsNullOrEmpty(F.TransactionNo) ? "" : $"· {F.TransactionNo}")</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ApplicantDetails A => Store.Current.Applicant;
+    private FormPartI P1 => Store.Current.PartI;
+    private FormPartII P2 => Store.Current.PartII;
+    private Attachments At => Store.Current.Attachments;
+    private FeePayment F => Store.Current.Fee;
+
+    private static string Dash(string? s) => string.IsNullOrWhiteSpace(s) ? "—" : s;
+    private static string FileName(UploadedFile? f) => f is null ? "— not uploaded —" : f.Name;
+}

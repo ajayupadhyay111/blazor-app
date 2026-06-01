@@ -1,0 +1,183 @@
+/* ============================================================
+   UPSMFAC Affiliation Portal — Government theme
+   Corporate, calm dark-blue palette. Boxy, professional, not flashy.
+   ============================================================ */
+:root {
+    --gov-navy:        #0b2e59;   /* primary deep blue   */
+    --gov-navy-dark:   #082244;
+    --gov-blue:        #15538f;   /* accent / links      */
+    --gov-blue-light:  #e8eef6;   /* panel tint          */
+    --gov-saffron:     #d9772b;   /* govt accent stripe  */
+    --gov-green:       #1f7a4d;   /* success / completed */
+    --gov-red:         #c0392b;   /* errors              */
+    --gov-border:      #c9d4e2;
+    --gov-text:        #1f2733;
+    --gov-muted:       #5a6b7b;
+    --gov-bg:          #f4f6f9;
+    --gov-radius:      6px;
+    --gov-shadow:      0 1px 3px rgba(11, 46, 89, .12);
+}
+
+html, body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--gov-bg);
+    color: var(--gov-text);
+    font-size: 15px;
+}
+
+a { color: var(--gov-blue); }
+
+/* ---------- Top government header ---------- */
+.gov-topstrip {
+    height: 4px;
+    background: linear-gradient(90deg, var(--gov-saffron) 0 33%, #ffffff 33% 66%, var(--gov-green) 66% 100%);
+}
+.gov-header {
+    background: #fff;
+    color: var(--gov-text);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 3px solid var(--gov-navy);
+    box-shadow: var(--gov-shadow);
+    flex-wrap: wrap;
+}
+.gov-logo { height: 48px; width: auto; flex: 0 0 auto; }
+.gov-header-text { border-left: 1px solid var(--gov-border); padding-left: 18px; }
+.gov-header-text .portal { font-size: 17px; font-weight: 700; color: var(--gov-navy); letter-spacing: .2px; }
+.gov-header-text .sub { font-size: 12.5px; color: var(--gov-muted); margin-top: 2px; }
+@media (max-width: 560px) {
+    .gov-header-text { border-left: none; padding-left: 0; }
+    .gov-logo { height: 40px; }
+}
+
+/* ---------- Layout shell ---------- */
+.gov-shell { max-width: 980px; margin: 26px auto; padding: 0 18px; }
+
+/* ---------- Boxy cards ---------- */
+.gov-card {
+    background: #fff;
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius);
+    box-shadow: var(--gov-shadow);
+    margin-bottom: 20px;
+}
+.gov-card-head {
+    background: var(--gov-blue-light);
+    border-bottom: 1px solid var(--gov-border);
+    padding: 12px 18px;
+    font-weight: 600;
+    color: var(--gov-navy);
+    font-size: 15.5px;
+    display: flex; align-items: center; gap: 10px;
+}
+.gov-card-head .num {
+    background: var(--gov-navy); color: #fff;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; flex: 0 0 auto;
+}
+.gov-card-body { padding: 18px; }
+
+/* ---------- Stepper ---------- */
+.gov-stepper { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; }
+.gov-step {
+    flex: 1 1 0; min-width: 92px;
+    text-align: center; padding: 9px 6px; cursor: pointer;
+    background: #fff; border: 1px solid var(--gov-border);
+    font-size: 12px; color: var(--gov-muted); position: relative;
+}
+.gov-step .dot {
+    display: block; width: 22px; height: 22px; line-height: 22px;
+    border-radius: 50%; margin: 0 auto 5px; background: #d7dee8; color: #fff; font-weight: 600;
+}
+.gov-step.active { border-color: var(--gov-navy); color: var(--gov-navy); font-weight: 600; }
+.gov-step.active .dot { background: var(--gov-navy); }
+.gov-step.done .dot { background: var(--gov-green); }
+.gov-step.done { color: var(--gov-green); }
+.gov-step.locked { opacity: .65; cursor: not-allowed; }
+
+/* ---------- Form fields ---------- */
+.field { margin-bottom: 15px; }
+.field label { display: block; font-weight: 600; font-size: 13.5px; margin-bottom: 5px; color: #2a3744; }
+.field label .req { color: var(--gov-red); margin-left: 2px; }
+.field .hint { font-size: 12px; color: var(--gov-muted); margin-top: 3px; }
+.field input[type=text], .field input[type=email], .field input[type=number],
+.field input[type=date], .field select, .field textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--gov-border);
+    border-radius: 4px; font-size: 14px; background: #fff; box-sizing: border-box;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--gov-blue); box-shadow: 0 0 0 3px rgba(21,83,143,.12);
+}
+.field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--gov-red); }
+.field .err { color: var(--gov-red); font-size: 12px; margin-top: 4px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 18px; }
+@media (max-width: 640px) { .row2, .row3 { grid-template-columns: 1fr; } }
+
+/* radios */
+.radioset { display: flex; gap: 18px; flex-wrap: wrap; }
+.radioset label { font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+/* ---------- Buttons ---------- */
+.btn-gov {
+    background: var(--gov-navy); color: #fff; border: none; padding: 10px 22px;
+    border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-gov:hover { background: var(--gov-navy-dark); }
+.btn-gov:disabled { background: #9fb0c4; cursor: not-allowed; }
+.btn-ghost {
+    background: #fff; color: var(--gov-navy); border: 1px solid var(--gov-navy);
+    padding: 10px 22px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-ghost:hover { background: var(--gov-blue-light); }
+.btn-sm { padding: 6px 12px; font-size: 12.5px; }
+.btn-danger { background: var(--gov-red); color: #fff; border: none; border-radius: 4px; cursor: pointer; padding: 6px 12px; }
+
+/* ---------- Nav footer ---------- */
+.gov-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; gap: 12px;
+}
+.saved-pill { font-size: 12.5px; color: var(--gov-green); }
+.saved-pill.idle { color: var(--gov-muted); }
+
+/* ---------- Misc ---------- */
+.gov-note {
+    background: #fff8ec; border: 1px solid #f0d9a8; border-left: 4px solid var(--gov-saffron);
+    padding: 10px 14px; border-radius: 4px; font-size: 13px; margin-bottom: 16px;
+}
+.gov-errbox {
+    background: #fdecec; border: 1px solid #f3b4ad; border-left: 4px solid var(--gov-red);
+    padding: 10px 14px; border-radius: 4px; font-size: 13px; margin-bottom: 16px;
+}
+.gov-errbox ul { margin: 6px 0 0; padding-left: 18px; }
+.gov-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.gov-table th, .gov-table td { border: 1px solid var(--gov-border); padding: 8px; text-align: left; vertical-align: top; }
+.gov-table th { background: var(--gov-blue-light); color: var(--gov-navy); }
+.file-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--gov-blue-light);
+    border: 1px solid var(--gov-border); padding: 5px 10px; border-radius: 4px; font-size: 12.5px; margin-top: 6px; }
+/* dynamic course blocks (replaces the old wide table that overflowed) */
+.course-block {
+    border: 1px solid var(--gov-border); border-radius: var(--gov-radius);
+    background: #fcfdff; padding: 14px 16px 4px; margin-bottom: 14px; position: relative;
+}
+.course-block .course-no { font-weight: 600; color: var(--gov-navy); font-size: 13px; margin-bottom: 10px; }
+.course-block .remove { position: absolute; top: 12px; right: 12px; }
+.course-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+.course-grid .full { grid-column: 1 / -1; }
+@media (max-width: 640px) { .course-grid { grid-template-columns: 1fr; } }
+
+.summary-grid { display: grid; grid-template-columns: 240px 1fr; gap: 6px 14px; font-size: 13.5px; }
+.summary-grid .k { color: var(--gov-muted); }
+.success-box { text-align: center; padding: 30px; }
+.success-box .code { font-size: 26px; font-weight: 700; color: var(--gov-navy); letter-spacing: 1px; margin: 10px 0; }
+
+@media print {
+    .gov-header, .gov-topstrip, .gov-stepper, .gov-nav, .no-print { display: none !important; }
+    .gov-shell { margin: 0; max-width: 100%; }
+    .gov-card { box-shadow: none; }
+}

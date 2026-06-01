@@ -1,0 +1,74 @@
+@inject DraftStore Store
+
+<div class="row2">
+    <div class="field">
+        <label>Applicant Type <span class="req">*</span></label>
+        <select @bind="A.ApplicantType" @bind:after="Save">
+            @foreach (var t in ReferenceData.ApplicantTypes) { <option value="@t">@t</option> }
+        </select>
+    </div>
+    <div class="field">
+        <label>Name of Society / Trust / Company <span class="req">*</span></label>
+        <input type="text" @bind="A.SocietyName" @bind:after="Save" />
+    </div>
+</div>
+
+<div class="field">
+    <label>Proposed Institute Name <span class="req">*</span></label>
+    <input type="text" @bind="A.InstituteName" @bind:after="Save" />
+</div>
+
+<div class="field">
+    <label>Address <span class="req">*</span></label>
+    <textarea rows="2" @bind="A.Address" @bind:after="Save"></textarea>
+</div>
+
+<div class="row3">
+    <div class="field">
+        <label>District <span class="req">*</span></label>
+        <select @bind="A.District" @bind:after="Save">
+            <option value="">-- Select --</option>
+            @foreach (var d in ReferenceData.Districts) { <option value="@d">@d</option> }
+        </select>
+    </div>
+    <div class="field">
+        <label>Pin Code <span class="req">*</span></label>
+        <input type="text" maxlength="6" @bind="A.PinCode" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Contact Person Name <span class="req">*</span></label>
+        <input type="text" @bind="A.ContactPerson" @bind:after="Save" />
+    </div>
+</div>
+
+<div class="row3">
+    <div class="field">
+        <label>Phone</label>
+        <input type="text" @bind="A.Phone" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Mobile <span class="req">*</span></label>
+        <input type="text" maxlength="10" @bind="A.Mobile" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Email <span class="req">*</span></label>
+        <input type="email" @bind="A.Email" @bind:after="Save" />
+    </div>
+</div>
+
+<div class="field">
+    <label>Forwarding / Inspection Officer Name (अग्रेषण अधिकारी — approving authority)</label>
+    <input type="text" @bind="A.ForwardingOfficer" @bind:after="Save" />
+    <div class="hint">Vah anumodankari pradhikari jo prastav ko aage forward karega.</div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private ApplicantDetails A => Store.Current.Applicant;
+
+    private async Task Save()
+    {
+        await Store.SaveAsync();
+        await OnChanged.InvokeAsync();
+    }
+}

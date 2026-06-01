@@ -1,0 +1,73 @@
+@* Reusable file upload. Reads the chosen file into a Base64 data URL (≤2 MB) using
+   Blazor's InputFile (no JS interop), stores it on the model, and shows a pill with
+   the filename + a Remove button. *@
+@inject DraftStore Store
+
+<div class="field @(string.IsNullOrEmpty(Error) ? "" : "invalid")">
+    <label>@Label @if (Required) { <span class="req">*</span> } <span class="hint">(@Accept, max 2 MB)</span></label>
+
+    @if (Value is null)
+    {
+        <InputFile OnChange="OnChange" accept="@Accept" />
+    }
+    else
+    {
+        <div class="file-pill">
+            📎 <strong>@Value.Name</strong> <span>(@FormatSize(Value.Size))</span>
+            <button type="button" class="btn-danger btn-sm" @onclick="Remove">Remove</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Error)) { <div class="err">@Error</div> }
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Accept { get; set; } = ".pdf,.zip";
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public UploadedFile? Value { get; set; }
+    [Parameter] public EventCallback<UploadedFile?> ValueChanged { get; set; }
+
+    private string? Error;
+
+    private async Task OnChange(InputFileChangeEventArgs e)
+    {
+        Error = null;
+        var f = e.File;
+        if (f.Size > DraftStore.MaxFileBytes)
+        {
+            Error = $"File {FormatSize(f.Size)} hai — 2 MB se chhoti file chunein (localStorage limit).";
+            return;
+        }
+        try
+        {
+            using var ms = new MemoryStream();
+            await f.OpenReadStream(DraftStore.MaxFileBytes).CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            var ct = string.IsNullOrWhiteSpace(f.ContentType) ? "application/octet-stream" : f.ContentType;
+            var file = new UploadedFile
+            {
+                Name = f.Name,
+                ContentType = ct,
+                Size = f.Size,
+                DataUrl = $"data:{ct};base64,{Convert.ToBase64String(bytes)}",
+            };
+            await ValueChanged.InvokeAsync(file);
+            await Store.SaveAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = "File read nahi ho payi: " + ex.Message;
+        }
+    }
+
+    private async Task Remove()
+    {
+        Error = null;
+        await ValueChanged.InvokeAsync(null);
+        await Store.SaveAsync();
+    }
+
+    private static string FormatSize(long bytes) =>
+        bytes < 1024 ? $"{bytes} B" : bytes < 1024 * 1024 ? $"{bytes / 1024} KB" : $"{bytes / 1024.0 / 1024:0.0} MB";
+}

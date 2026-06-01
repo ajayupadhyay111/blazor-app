@@ -1,0 +1,54 @@
+@inject DraftStore Store
+
+<p class="hint">Form Details Part-II — Mukhya Adhikari, sambaddh vishwavidyalaya, aur hospital ki jaankari. (Allied &amp; Healthcare terminology.)</p>
+
+<div class="row2">
+    <div class="field">
+        <label>Chief / Nodal Officer Name (मुख्य अधिकारी) <span class="req">*</span></label>
+        <input type="text" @bind="P.ChiefOfficerName" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Designation</label>
+        <input type="text" @bind="P.ChiefOfficerDesignation" @bind:after="Save" />
+    </div>
+</div>
+
+<div class="row2">
+    <div class="field">
+        <label>Officer Letter / Signature Date</label>
+        <input type="date" @bind="P.OfficerLetterDate" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Affiliated University (संबद्ध विश्वविद्यालय)</label>
+        <input type="text" @bind="P.AffiliatedUniversity" @bind:after="Save" />
+    </div>
+</div>
+
+<div class="row2">
+    <div class="field">
+        <label>Hospital Name</label>
+        <input type="text" @bind="P.HospitalName" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Is the Hospital Empanelled with PMJAY?</label>
+        <div class="radioset" style="padding-top:6px;">
+            <label><input type="radio" name="pmjay" value="Yes"
+                   checked="@(P.PmjayEmpanelled == "Yes")" @onchange="@(() => SetPmjay("Yes"))" /> Yes</label>
+            <label><input type="radio" name="pmjay" value="No"
+                   checked="@(P.PmjayEmpanelled == "No")" @onchange="@(() => SetPmjay("No"))" /> No</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private FormPartII P => Store.Current.PartII;
+
+    private async Task SetPmjay(string v) { P.PmjayEmpanelled = v; await Save(); }
+
+    private async Task Save()
+    {
+        await Store.SaveAsync();
+        await OnChanged.InvokeAsync();
+    }
+}

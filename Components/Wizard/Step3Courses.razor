@@ -1,0 +1,91 @@
+@inject DraftStore Store
+
+<p class="hint">Ek ya zyada course add karein. Course Type chunne par uske courses dropdown mein aayenge.</p>
+
+@for (var idx = 0; idx < Courses.Count; idx++)
+{
+    var i = idx;
+    var row = Courses[i];
+    <div class="course-block">
+        <div class="course-no">Course #@(i + 1)</div>
+        @if (Courses.Count > 1)
+        {
+            <button type="button" class="btn-danger btn-sm remove" @onclick="() => Remove(i)">✕ Remove</button>
+        }
+        <div class="course-grid">
+            <div class="field">
+                <label>Applied for <span class="req">*</span></label>
+                <select @bind="row.AppliedFor" @bind:after="Save">
+                    @foreach (var o in ReferenceData.AppliedForOptions) { <option value="@o">@o</option> }
+                </select>
+            </div>
+            <div class="field">
+                <label>Council <span class="req">*</span></label>
+                <select @bind="row.Council" @bind:after="Save">
+                    @foreach (var o in ReferenceData.Councils) { <option value="@o">@o</option> }
+                </select>
+            </div>
+            <div class="field">
+                <label>Course Type <span class="req">*</span></label>
+                <select value="@row.CourseType" @onchange="@(e => OnCourseType(i, e))">
+                    <option value="">-- Select --</option>
+                    @foreach (var o in ReferenceData.CourseTypes) { <option value="@o">@o</option> }
+                </select>
+            </div>
+            <div class="field full">
+                <label>Select Course <span class="req">*</span></label>
+                <select @bind="row.Course" @bind:after="Save" disabled="@string.IsNullOrEmpty(row.CourseType)">
+                    <option value="">-- Select Course --</option>
+                    @foreach (var co in ReferenceData.CoursesFor(row.CourseType)) { <option value="@co">@co</option> }
+                </select>
+                @if (string.IsNullOrEmpty(row.CourseType))
+                {
+                    <div class="hint">Pehle Course Type chunein.</div>
+                }
+            </div>
+            @if (row.AppliedFor == "Seat Enhancement")
+            {
+                <div class="field">
+                    <label>Existing Seats <span class="req">*</span></label>
+                    <input type="number" min="0" @bind="row.ExistingSeats" @bind:after="Save" />
+                </div>
+            }
+            <div class="field">
+                <label>Applied Seats <span class="req">*</span></label>
+                <input type="number" min="1" @bind="row.AppliedSeats" @bind:after="Save" />
+            </div>
+        </div>
+    </div>
+}
+
+<button type="button" class="btn-ghost btn-sm" @onclick="Add">+ Add Course</button>
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private List<CourseRow> Courses => Store.Current.Courses;
+
+    private async Task OnCourseType(int i, ChangeEventArgs e)
+    {
+        Courses[i].CourseType = e.Value?.ToString() ?? "";
+        Courses[i].Course = ""; // reset dependent course when type changes
+        await Save();
+    }
+
+    private async Task Add()
+    {
+        Courses.Add(new CourseRow());
+        await Save();
+    }
+
+    private async Task Remove(int i)
+    {
+        Courses.RemoveAt(i);
+        await Save();
+    }
+
+    private async Task Save()
+    {
+        await Store.SaveAsync();
+        await OnChanged.InvokeAsync();
+    }
+}

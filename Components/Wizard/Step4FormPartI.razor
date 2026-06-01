@@ -1,0 +1,60 @@
+@inject DraftStore Store
+
+<p class="hint">Form Details Part-I — Society/Trust/Company & Training Center ki jaankari. (Please fill in English.)</p>
+
+<div class="row2">
+    <div class="field">
+        <label>No. of Seats Applied for <span class="req">*</span></label>
+        <input type="number" min="1" @bind="P.SeatsAppliedFor" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Type of Institution <span class="req">*</span></label>
+        <select @bind="P.InstitutionType" @bind:after="Save">
+            <option>PRIVATE</option>
+            <option>GOVERNMENT</option>
+            <option>AIDED</option>
+        </select>
+    </div>
+</div>
+
+<div class="field">
+    <label>Name of Institution (Society/Trust/Company)</label>
+    <input type="text" @bind="P.InstitutionName" @bind:after="Save" />
+</div>
+
+<div class="row2">
+    <div class="field">
+        <label>Institution Registration Number <span class="req">*</span></label>
+        <input type="text" @bind="P.RegistrationNumber" @bind:after="Save" />
+    </div>
+    <div class="field">
+        <label>Registration Date (valid honi chahiye) <span class="req">*</span></label>
+        <input type="date" @bind="P.RegistrationDate" @bind:after="Save" />
+    </div>
+</div>
+
+<div class="field">
+    <label>Institution Address <span class="req">*</span></label>
+    <textarea rows="2" @bind="P.InstitutionAddress" @bind:after="Save"></textarea>
+</div>
+
+<div class="field">
+    <label>Name of Applied Institution</label>
+    <input type="text" @bind="P.AppliedInstitutionName" @bind:after="Save" />
+</div>
+
+<div class="field">
+    <label><input type="checkbox" @bind="P.NonProfitableDeclared" @bind:after="Save" />
+        Sansthaan Non-Profitable hai, grameen/25 km dayre ke antargat registered hai tatha hastantarit anugyapti hai.</label>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private FormPartI P => Store.Current.PartI;
+
+    private async Task Save()
+    {
+        await Store.SaveAsync();
+        await OnChanged.InvokeAsync();
+    }
+}

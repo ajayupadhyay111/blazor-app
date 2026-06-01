@@ -1,0 +1,247 @@
+@page "/affiliation"
+@rendermode InteractiveServer
+@inject DraftStore Store
+@inject IJSRuntime JS
+
+<PageTitle>Affiliation Application — UPSMFAC</PageTitle>
+
+<div class="gov-shell">
+
+@if (!_ready)
+{
+    <div class="gov-card"><div class="gov-card-body">Loading…</div></div>
+}
+else if (Store.Current.Status == "submitted")
+{
+    <div class="gov-card">
+        <div class="gov-card-head"><span class="num">✓</span> Application Submitted</div>
+        <div class="gov-card-body success-box">
+            <p>Aapka affiliation application successfully submit ho gaya hai.</p>
+            <div class="code">@Store.Current.RegistrationCode</div>
+            <p class="hint">Yeh Registration Code apne paas surakshit rakhein.</p>
+            <div style="margin-top:18px; display:flex; gap:10px; justify-content:center;">
+                <button class="btn-ghost no-print" @onclick="Print">🖶 Print / Download</button>
+                <button class="btn-gov no-print" @onclick="StartNew">New Application</button>
+            </div>
+        </div>
+    </div>
+    <ReviewSummary />
+}
+else
+{
+    @if (_showResume)
+    {
+        <div class="gov-note">
+            Aapki ek adhuri application mili (last saved @FormatSaved()).
+            <button class="btn-gov btn-sm" @onclick="Resume">Resume</button>
+            <button class="btn-ghost btn-sm" @onclick="StartNew">Start New</button>
+        </div>
+    }
+
+    <Stepper Titles="StepTitles" Current="_step" OnJump="GoTo" />
+
+    <div class="gov-card">
+        <div class="gov-card-head"><span class="num">@_step</span> @StepTitles[_step - 1]</div>
+        <div class="gov-card-body">
+
+            @if (_errors.Count > 0)
+            {
+                <div class="gov-errbox">
+                    Kripya neeche di gayi galtiyan theek karein:
+                    <ul>@foreach (var e in _errors) { <li>@e</li> }</ul>
+                </div>
+            }
+
+            @switch (_step)
+            {
+                case 1: <Step1Registration OnChanged="Touch" /> break;
+                case 2: <Step2Applicant OnChanged="Touch" /> break;
+                case 3: <Step3Courses OnChanged="Touch" /> break;
+                case 4: <Step4FormPartI OnChanged="Touch" /> break;
+                case 5: <Step5FormPartII OnChanged="Touch" /> break;
+                case 6: <Step6Uploads OnChanged="Touch" /> break;
+                case 7: <Step7Fee OnChanged="Touch" /> break;
+                case 8: <ReviewSummary />
+                        <div class="field" style="margin-top:16px;">
+                            <label><input type="checkbox" @bind="Store.Current.Declaration.Accepted" @bind:after="Touch" />
+                                Main ghoshna karta hoon ki upar di gayi saari jaankari sahi hai.</label>
+                        </div>
+                        <div class="row2">
+                            <div class="field"><label>Place <span class="req">*</span></label>
+                                <input type="text" @bind="Store.Current.Declaration.Place" @bind:after="Touch" /></div>
+                            <div class="field"><label>Authorised Signatory Name <span class="req">*</span></label>
+                                <input type="text" @bind="Store.Current.Declaration.SignatoryName" @bind:after="Touch" /></div>
+                        </div>
+                        break;
+            }
+        </div>
+    </div>
+
+    <div class="gov-nav">
+        <div>
+            @if (_step > 1)
+            {
+                <button class="btn-ghost" @onclick="Back">← Back</button>
+            }
+        </div>
+        <span class="saved-pill @(Store.LastSaved is null ? "idle" : "")">
+            @(Store.LastSaved is null ? "Not saved yet" : $"Saved ✓ {Store.LastSaved:hh:mm:ss tt}")
+        </span>
+        <div>
+            @if (_step < TotalSteps)
+            {
+                <button class="btn-gov" @onclick="Next">Save &amp; Proceed Next →</button>
+            }
+            else
+            {
+                <button class="btn-gov" @onclick="Submit">✓ Final Submission</button>
+            }
+        </div>
+    </div>
+}
+</div>
+
+@code {
+    private const int TotalSteps = 8;
+    private static readonly string[] StepTitles =
+        { "Registration", "Applicant", "Courses", "Form Part-I", "Form Part-II", "Uploads", "Fee Payment", "Review & Submit" };
+
+    private bool _ready;
+    private bool _showResume;
+    private int _step = 1;
+    private List<string> _errors = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        // JS interop (localStorage) only works after the circuit is connected.
+        if (await Store.HasDraftAsync())
+        {
+            _showResume = Store.Current.Status != "submitted";
+        }
+        await Store.LoadAsync();
+        _step = Math.Clamp(Store.Current.CurrentStep, 1, TotalSteps);
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private async Task Touch()
+    {
+        // Agar errors dikh rahe hain to user ke fix karte hi live update karo
+        // (Next dobara dabane ki zaroorat nahi). Review step (8) ke errors Submit pe hi bante hain.
+        if (_errors.Count > 0 && _step < TotalSteps) _errors = Validate(_step);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Resume()
+    {
+        _showResume = false;
+        _step = Math.Clamp(Store.Current.CurrentStep, 1, TotalSteps);
+        await Touch();
+    }
+
+    private async Task StartNew()
+    {
+        await Store.StartNewAsync();
+        _showResume = false;
+        _step = 1;
+        _errors.Clear();
+        await Touch();
+    }
+
+    private async Task GoTo(int step)
+    {
+        _errors.Clear();
+        _step = step;
+        Store.Current.CurrentStep = _step;
+        await Store.SaveAsync();
+        await Touch();
+    }
+
+    private async Task Back()
+    {
+        _errors.Clear();
+        if (_step > 1) _step--;
+        Store.Current.CurrentStep = _step;
+        await Store.SaveAsync();
+        await Touch();
+    }
+
+    private async Task Next()
+    {
+        _errors = Validate(_step);
+        if (_errors.Count > 0) { await Touch(); return; }
+        if (_step < TotalSteps) _step++;
+        Store.Current.CurrentStep = _step;
+        await Store.SaveAsync();
+        await Touch();
+    }
+
+    private async Task Submit()
+    {
+        _errors = new();
+        for (var s = 1; s <= TotalSteps; s++) _errors.AddRange(Validate(s));
+        if (!Store.Current.Declaration.Accepted) _errors.Add("Declaration accept karein.");
+        if (string.IsNullOrWhiteSpace(Store.Current.Declaration.Place)) _errors.Add("Place daalein.");
+        if (string.IsNullOrWhiteSpace(Store.Current.Declaration.SignatoryName)) _errors.Add("Signatory name daalein.");
+        if (_errors.Count > 0) { await Touch(); return; }
+        await Store.SubmitAsync();
+        await Touch();
+    }
+
+    private async Task Print() => await JS.InvokeVoidAsync("appStorage.print");
+
+    private string FormatSaved() =>
+        DateTime.TryParse(Store.Current.LastSavedUtc, out var d) ? d.ToLocalTime().ToString("g") : "—";
+
+    /// <summary>Centralised per-step required-field validation.</summary>
+    private List<string> Validate(int step)
+    {
+        var c = Store.Current;
+        var e = new List<string>();
+        switch (step)
+        {
+            case 2:
+                var a = c.Applicant;
+                if (string.IsNullOrWhiteSpace(a.SocietyName)) e.Add("Society/Trust/Company ka naam zaroori hai.");
+                if (string.IsNullOrWhiteSpace(a.InstituteName)) e.Add("Proposed Institute Name zaroori hai.");
+                if (string.IsNullOrWhiteSpace(a.Address)) e.Add("Address zaroori hai.");
+                if (string.IsNullOrWhiteSpace(a.District)) e.Add("District chunein.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(a.PinCode ?? "", @"^\d{6}$")) e.Add("Pin Code 6 digit ka hona chahiye.");
+                if (string.IsNullOrWhiteSpace(a.ContactPerson)) e.Add("Contact Person Name zaroori hai.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(a.Mobile ?? "", @"^[6-9]\d{9}$")) e.Add("Mobile 10 digit ka valid number daalein.");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(a.Email ?? "", @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) e.Add("Valid Email daalein.");
+                break;
+            case 3:
+                if (c.Courses.Count == 0) e.Add("Kam se kam ek course add karein.");
+                for (var i = 0; i < c.Courses.Count; i++)
+                {
+                    var r = c.Courses[i];
+                    if (string.IsNullOrWhiteSpace(r.CourseType)) e.Add($"Course {i + 1}: Course Type chunein.");
+                    if (string.IsNullOrWhiteSpace(r.Course)) e.Add($"Course {i + 1}: Course chunein.");
+                    if (r.AppliedSeats is null or <= 0) e.Add($"Course {i + 1}: Applied seats daalein.");
+                    if (r.AppliedFor == "Seat Enhancement" && (r.ExistingSeats is null or < 0)) e.Add($"Course {i + 1}: Existing seats daalein.");
+                }
+                break;
+            case 4:
+                var p = c.PartI;
+                if (p.SeatsAppliedFor is null or <= 0) e.Add("No. of Seats Applied for daalein.");
+                if (string.IsNullOrWhiteSpace(p.RegistrationNumber)) e.Add("Institution Registration Number zaroori hai.");
+                if (p.RegistrationDate is null) e.Add("Registration Date zaroori hai.");
+                if (string.IsNullOrWhiteSpace(p.InstitutionAddress)) e.Add("Institution Address zaroori hai.");
+                break;
+            case 5:
+                if (string.IsNullOrWhiteSpace(c.PartII.ChiefOfficerName)) e.Add("Chief/Nodal Officer ka naam zaroori hai.");
+                break;
+            case 6:
+                if (c.Attachments.TeachingBlockPhoto is null) e.Add("Attachment-1 (Teaching Block Photograph) zaroori hai.");
+                if (c.Attachments.StaffDetails is null) e.Add("Attachment-4 (Staff Details) zaroori hai.");
+                if (c.Attachments.Affidavit is null) e.Add("Attachment-5 (Affidavit) zaroori hai.");
+                break;
+            case 7:
+                if (!c.Fee.Paid && string.IsNullOrWhiteSpace(c.Fee.TransactionNo)) e.Add("Payment karein ya Transaction No. daalein.");
+                break;
+        }
+        return e;
+    }
+}
